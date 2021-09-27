@@ -1,0 +1,157 @@
+# connectionn settings
+
+#启用调试日志，这项要放在最上面
+verbose = true
+
+# mongodb的链接地址
+mongo-url = "mongodb://mongo:27017"
+
+# es的链接地址
+elasticsearch-urls = ["http://es01:9200"]
+# elasticsearch-urls = ["http://10.20.54.165:9200"]
+
+# frequently required settings
+
+# 要监听的mongodb的集合格式是 库名.集合名，可以写多个，也可以使用正则来匹配多个，相应配置项为 namespace-regex
+direct-read-namespaces = ["spc_data.alarm_data"]
+
+# if you want to use MongoDB change streams instead of legacy oplog tailing use change-stream-namespaces
+# change streams require at least MongoDB API 3.6+
+# if you have MongoDB 4+ you can listen for changes to an entire database or entire deployment
+# in this case you usually don't need regexes in your config to filter collections unless you target the deployment.
+# to listen to an entire db use only the database name.  For a deployment use an empty string.
+change-stream-namespaces = ["spc_data.alarm_data"]
+
+# additional settings
+
+# if you don't want to listen for changes to all collections in MongoDB but only a few
+# e.g. only listen for inserts, updates, deletes, and drops from mydb.mycollection
+# this setting does not initiate a copy, it is only a filter on the change event listener
+#namespace-regex = ''
+
+# compress requests to Elasticsearch
+# gzip = true
+
+# generate indexing statistics
+#stats = true
+
+# index statistics into Elasticsearch
+#index-stats = true
+
+# use the following PEM file for connections to MongoDB
+#mongo-pem-file = ""
+
+# disable PEM validation
+#mongo-validate-pem-file = true
+
+# es用户（没有可不填）
+# elasticsearch-user = "elastic"
+
+# es密码（没有可不填）
+# elasticsearch-password = "pwd"
+
+# monstache最多开几个线程同步到es,默认为4
+elasticsearch-max-conns = 10
+
+# use the following PEM file to connections to Elasticsearch
+#elasticsearch-pem-file = ""
+
+# validate connections to Elasticsearch
+#elastic-validate-pem-file = false
+
+# mongodb删除集合或库时是否同步删除es中的索引
+dropped-collections = true
+dropped-databases = true
+
+# do not start processing at the beginning of the MongoDB oplog
+# if you set the replay to true you may see version conflict messages
+# in the log if you had synced previously. This just means that you are replaying old docs which are already
+# in Elasticsearch with a newer version. Elasticsearch is preventing the old docs from overwriting new ones.
+#replay = false
+
+# 记录同步位点，便于下次从该位置同步
+resume = true
+
+# 更新es而不是覆盖
+index-as-update = true
+
+# do not validate that progress timestamps have been saved
+#resume-write-unsafe = false
+
+# override the name under which resume state is saved
+#resume-name = "default"
+
+# 指定恢复策略。仅当resume为true时生效，默认为0-基于时间戳的变更流恢复
+resume-strategy = 0
+
+# exclude documents whose namespace matches the following pattern
+#namespace-exclude-regex = '^mydb\.ignorecollection$'
+
+# turn on indexing of GridFS file content
+#index-files = true
+
+# turn on search result highlighting of GridFS content
+#file-highlighting = true
+
+# index GridFS files inserted into the following collections
+#file-namespaces = ["users.fs.files"]
+
+# 高可用模式下需要配置集群名称，集群名称一样的进程会自动加入一个集群内，
+# 要注意这是个集群是高可用的，而不是负载均衡的。（看到其他文档里说这个参数是es集群的名称，其实并不是，自定义值）
+cluster-name = 'docker-cluster'
+
+# do not exit after full-sync, rather continue tailing the oplog
+#exit-after-direct-reads = false
+
+#日志记录，monstache默认是输出到标准输出的，这里指定它输出到指定的日志文件（这个也是踩坑踩出来的哦！）
+# [logs]
+# info = "../logs/monstache/info.log"
+# warn = "../home/admin/logs/monstache/warn.log"
+# error = "./data/monstache/error.log"
+# trace = "../logs/monstache/trace.log"
+
+#设置日志切割参数，下面的配置意思是：每个日志文件超过500M会被切割，最大保存最近60个日志文件，会压缩历史日志
+# [log-rotate]
+# max-size = 100
+# max-age = 10
+# compress = true
+
+#mapping定义mongodb数据到es的索引名称和type，namespace是库名.集合名
+#这里需要注意一件事：最好是在es中创建好你要的索引结构，关闭es的自动创建索引功能，不然monstace会给mongodb中所有的集合都创建一个索引
+[[mapping]]
+namespace = "spc_data.alarm_data"
+index = "alarm_data"
+
+# [[script]]
+# namespace = "spc_data.alarm_data"
+# index = "alarm_data"
+# script = """
+# module.exports = function(doc) {
+
+#	doc.age=doc.name!=null;
+	
+#	for(var key in doc){
+#		if(key!='_id'
+#		&&key!='name'
+#		&&key!='age'
+#		){
+#		     delete doc[key];
+#		}
+#	}
+#    return doc;
+#}
+#"""
+
+
+
+
+
+
+
+
+
+
+
+
+
+

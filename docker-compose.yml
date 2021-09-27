@@ -1,0 +1,168 @@
+version: "3"
+services:
+  es01:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.14.1
+    container_name: es01
+    restart: always
+    environment:
+      - node.name=es01
+      - cluster.name=es-docker-cluster
+      - discovery.seed_hosts=es01,es02
+      - cluster.initial_master_nodes=es01,es02
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms256m -Xmx256m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - ./data/es01:/usr/share/elasticsearch/data
+      - ./conf/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
+    ports:
+      - "9200:9200"
+    networks:
+      - es_mongo_net
+
+  es02:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.14.1
+    container_name: es02
+    restart: always
+    environment:
+      - node.name=es02
+      - cluster.name=es-docker-cluster
+      - discovery.seed_hosts=es01,es02
+      - cluster.initial_master_nodes=es01,es02
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms256m -Xmx256m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - ./data/es02:/usr/share/elasticsearch/data
+      - ./conf/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
+    networks:
+      - es_mongo_net
+
+  elasticsearch-head:
+    image: mobz/elasticsearch-head:5
+    container_name: elasticsearch-head
+    restart: always
+    environment:
+      TZ: 'Asia/Shanghai'
+    ports:
+      - '9100:9100'
+    networks:
+      - es_mongo_net
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:7.14.1
+    container_name: kibana
+    restart: always
+    ports:
+      - "5601:5601"
+    volumes:
+      - /etc/localtime:/etc/localtime
+      - ./conf/kibana.yml:/usr/share/kibana/config/kibana.yml:rw
+    depends_on:
+      - es02
+      - es01
+    networks:
+      - es_mongo_net
+
+  mongo:
+    image: mongo
+    restart: always
+    container_name: mongo
+    environment:
+      TZ: Asia/Shanghai
+    volumes:
+      - ./data/db/log:/var/log/mongodb
+      - ./data/db:/data/db
+      - ./conf/mongod.conf.orig:/etc/mongod.conf.orig
+    command: --config /etc/mongod.conf.orig
+    ports:
+      - "27018:27017"
+    expose:
+      - 27017
+    networks:
+      - es_mongo_net
+
+  mongo-express:
+    image: mongo-express
+    container_name: mongo-express
+    restart: always
+    depends_on:
+      - mongo
+    ports:
+      - "8081:8081"
+    environment:
+      TZ: Asia/Shanghai
+      ME_CONFIG_MONGODB_URL: "mongodb://mongo:27017"
+    networks:
+      - es_mongo_net
+
+  monstache:
+    image: rwynn/monstache:rel6
+    restart: always
+    container_name: monstache
+    volumes:
+      - ./conf/monstache.config.toml:/app/monstache.config.toml
+    command: -f /app/monstache.config.toml
+    networks:
+      - es_mongo_net
+
+  mongosetup:
+    image: mongo
+    container_name: mongosetup
+    restart: always
+    depends_on:
+      - mongo
+    links:
+      - mongo
+    volumes:
+      - ./scripts:/scripts
+    entrypoint: ["/scripts/setup.sh"]
+    networks:
+      - es_mongo_net
+
+
+
+
+
+
+
+
+networks:
+  es_mongo_net:
+    external: true
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
